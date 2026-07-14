@@ -6,6 +6,21 @@ import config
 from lib import util
 from lib import queries_export_apex as query
 
+
+def normalize_apex_app_ids(value):
+    if value is None:
+        return []
+    values = value if type(value) == list else [value]
+    apps = []
+    for item in values:
+        if item is None:
+            continue
+        for app_id in str(item).replace(' ', ',').split(','):
+            app_id = app_id.strip()
+            if app_id and app_id != 'None':
+                apps.append(int(app_id))
+    return apps
+
 #
 #                                                      (R)
 #                      ---                  ---
@@ -103,16 +118,7 @@ class Export_APEX(config.Config):
         # scope
         self.arg_workspace  = self.args.ws      or self.conn.tns.get('workspace', '')
         self.arg_group      = self.args.group
-        self.arg_apps       = self.args.app     or self.conn.tns.get('app', '')
-        #
-        if type(self.arg_apps) != list:
-            self.arg_apps   = str(self.arg_apps).replace(' ', ',').split(',')
-        #
-        self.arg_apps       = list(filter(lambda item: item is not None,  self.arg_apps))   # remove empty elements
-        self.arg_apps       = list(filter(lambda item: item != 'None',    self.arg_apps))   # remove empty elements
-        #
-        for (i, app_id) in enumerate(self.arg_apps):
-            self.arg_apps[i] = int(app_id)
+        self.arg_apps       = normalize_apex_app_ids(self.args.app or self.conn.tns.get('app', ''))
         #
         self.arg_recent     = 1     # default walue = changes done today
         if isinstance(self.args.recent, bool):
