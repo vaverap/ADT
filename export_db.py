@@ -69,10 +69,11 @@ class Export_DB(config.Config):
 
         # if any schema is not passed, use the default
         schemas = (self.args.schema or '') + ','
-        if (self.args.schema == '%' or self.connection['schema_db'] == '%'):    # all schemas
-            schemas = ','.join(self.connection['schemas']) + ','
-        if not schemas.strip(','):
-            schemas = (self.connection['schema_db'] + ',')  # default schema
+
+#        if (self.args.schema == '%' or self.connection['schema_db'] == '%'):    # all schemas
+#            schemas = ','.join(self.connection['schemas']) + ','
+#        if not schemas.strip(','):
+#            schemas = (self.connection['schema_db'] + ',')  # default schema
 
         # connect to each requested schema
         for schema_name in schemas.split(','):
@@ -86,7 +87,7 @@ class Export_DB(config.Config):
         self.init_connection(schema_name = schema_name)
         #
         self.conn           = self.db_connect(ping_sqlcl = False)
-        self.remove_schema  = self.conn.tns.schema
+        self.remove_schema  = schema_name.lower()  #self.conn.tns.schema
         self.objects_prefix = self.connection.get('prefix', '')
         self.objects_ignore = self.connection.get('ignore', '')
         self.objects        = {}
@@ -129,8 +130,15 @@ class Export_DB(config.Config):
         deleted_files   = []
         if self.args.verbose:
             for file, obj in self.repo_files.items():
-                expecting = self.repo_root + '/'.join(os.path.dirname(file).replace('\\', '/').split('/')[0:-1])
-                if not (expecting in self.target_root):
+                # 1. Spočítáme přesnou složku schématu pro daný soubor (odsekneme typ objektu, např. TABLE)
+                schema_folder = '/'.join(os.path.dirname(file).replace('\\', '/').split('/')[0:-1])
+                expecting_dir = (self.repo_root + '/' + schema_folder).replace('\\', '/').replace('//', '/').rstrip('/')
+                
+                # 2. Normalizujeme naši cílovou složku pro export
+                target_dir = self.target_root.replace('\\', '/').replace('//', '/').rstrip('/')
+                
+                # 3. PŘESNÁ SHODA: Pokud se složky přesně nerovnají, soubor ignorujeme
+                if expecting_dir != target_dir:
                     continue
                 #
                 if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
