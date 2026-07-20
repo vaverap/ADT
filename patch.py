@@ -1198,6 +1198,7 @@ class Patch(config.Config):
                 'summary'       : util.get_string(info['summary'], self.summary_len),
                 'files'         : len(info['files']),
                 'deployed'      : self.get_commit_deploy_status(commit_id),
+                'commit_hash'   : info['id'],
             })
         #
         util.print_header('{} COMMITS FOR "{}"{}:'.format(header, ' '.join(self.search_message or []), (' SINCE RECENT PATCH ' + str(self.patch_recent)) if self.patch_recent else ''))
@@ -1220,6 +1221,7 @@ class Patch(config.Config):
                 'summary'       : util.get_string(commit['summary'], self.summary_len),
                 'files'         : len(self.all_commits[commit_id].get('files', [])),
                 #'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
+                'commit_hash'   : commit['id'],
             })
         #
         util.print_header('RECENT COMMITS:')
